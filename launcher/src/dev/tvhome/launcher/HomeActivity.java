@@ -64,6 +64,8 @@ public class HomeActivity extends Activity {
      * Now playing shows its idle state in the image, so no personal listening ends up in the screenshot.
      */
     static final String EXTRA_SNAPSHOT = "dev.tvhome.launcher.SNAPSHOT";
+    /** With SNAPSHOT: keep Now playing as it is (current track and art) instead of idle. */
+    static final String EXTRA_SNAPSHOT_KEEP_MUSIC = "dev.tvhome.launcher.SNAPSHOT_KEEP_MUSIC";
 
     /** True while HDMI is full screen and this activity is in front; read by {@link KeyService}. */
     static volatile boolean hdmiFullScreen;
@@ -630,6 +632,10 @@ public class HomeActivity extends Activity {
         if (intent.getBooleanExtra(EXTRA_SNAPSHOT, false)) {
             collapse(false);
             hideAllApps();
+            if (intent.getBooleanExtra(EXTRA_SNAPSHOT_KEEP_MUSIC, false)) {
+                root.postDelayed(this::saveSnapshot, 1200); // after onResume has reattached Now playing
+                return;
+            }
             // After onResume (which restarts Now playing): switch the panel to idle so no track or album
             // art is in the image, let it lay out, draw, then bring Now playing back.
             root.postDelayed(() -> {

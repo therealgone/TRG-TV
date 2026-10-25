@@ -151,8 +151,8 @@ docs/home.png               README screenshot
 
 To refresh the screenshot: `adb shell am start -n dev.tvhome.launcher/.HomeActivity --ez dev.tvhome.launcher.SNAPSHOT true`,
 then `adb pull /sdcard/Android/data/dev.tvhome.launcher/files/home.png docs/home.png`. The launcher draws itself
-(this TV's `screencap` is empty while the HDMI layer is on screen) and shows Now playing idle, so no
-listening history ends up in the image.
+(this TV's `screencap` is empty while the HDMI layer is on screen). By default Now playing is shown idle;
+add `--ez dev.tvhome.launcher.SNAPSHOT_KEEP_MUSIC true` to keep the current track, as in the screenshot above.
 
 ## Security & privacy
 

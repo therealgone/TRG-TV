@@ -236,6 +236,10 @@ public class HomeActivity extends Activity {
     }
 
     private void buildTile() {
+        // Rounded corners for the live picture, matching the tile's rounded frame.
+        content.addView(new Glass.CornerMask(this, dp(14), tileRect.left, tileRect.top, screenW, screenH),
+                Ui.at(tileRect.left, tileRect.top, tileRect.width(), tileRect.height()));
+
         tileFocus = new View(this);
         tileFocus.setBackground(Ui.ring(0x1AFFFFFF, Math.max(1, dp(0.75f)), dp(14)));
         Ui.focusable(tileFocus, dp(14), false);

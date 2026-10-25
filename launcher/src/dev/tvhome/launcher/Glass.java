@@ -21,9 +21,9 @@ import android.graphics.drawable.Drawable;
 final class Glass {
     private Glass() {}
 
-    static final int NAVY = 0xFF060818;
+    static final int BASE = 0xFF040506;
 
-    /** Deep navy with blurred blue / violet / teal light. Rendered once at low resolution. */
+    /** Near-black with a faint cool-grey glow for depth. Rendered once at low resolution. */
     static final class Aurora extends Drawable {
         private final int scrim;
         private final Paint bitmapPaint = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
@@ -46,16 +46,14 @@ final class Glass {
         private static Bitmap render(int w, int h) {
             Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
             Canvas c = new Canvas(bmp);
-            c.drawColor(NAVY);
-            blob(c, w * 0.12f, h * 0.18f, w * 0.55f, 0xB02D4BFF); // blue, top left
-            blob(c, w * 0.88f, h * 0.12f, w * 0.50f, 0x9A7A3CFF); // violet, top right
-            blob(c, w * 0.62f, h * 1.00f, w * 0.60f, 0x7A1FB5D6); // teal, bottom
-            blob(c, w * 0.30f, h * 0.85f, w * 0.38f, 0x55C24BE8); // magenta haze
-            blob(c, w * 0.50f, h * 0.45f, w * 0.35f, 0x30A9C4FF); // soft centre light
-            // Vignette so edges stay dark and text stays readable.
+            c.drawColor(BASE);
+            blob(c, w * 0.18f, h * 0.10f, w * 0.60f, 0x4A3A4558); // cool grey light, top left
+            blob(c, w * 0.85f, h * 0.20f, w * 0.45f, 0x2E3C4150); // fainter, top right
+            blob(c, w * 0.55f, h * 1.05f, w * 0.65f, 0x26304048); // slate, low centre
+            // Vignette so the edges fall off to black.
             Paint v = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
             v.setShader(new RadialGradient(w / 2f, h / 2f, Math.max(w, h) * 0.75f,
-                    new int[]{0x00000000, 0x00000000, 0x99000000}, new float[]{0f, 0.55f, 1f}, Shader.TileMode.CLAMP));
+                    new int[]{0x00000000, 0x00000000, 0xB3000000}, new float[]{0f, 0.5f, 1f}, Shader.TileMode.CLAMP));
             c.drawRect(0, 0, w, h, v);
             return bmp;
         }
@@ -69,6 +67,43 @@ final class Glass {
         @Override public void setAlpha(int alpha) {}
         @Override public void setColorFilter(ColorFilter cf) {}
         @Override public int getOpacity() { return PixelFormat.OPAQUE; }
+    }
+
+    /**
+     * Rounds the corners of a live video tile. Android 10 can't clip a video surface to a rounded shape,
+     * so this view sits over the tile and repaints the screen background everywhere outside a rounded
+     * rectangle: the four corners. {@code offsetX/Y} is the tile's position on screen, so the background
+     * lines up exactly with the real one behind it.
+     */
+    static final class CornerMask extends android.view.View {
+        private final Aurora background = new Aurora(0);
+        private final Paint clear = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF hole = new RectF();
+        private final float radius;
+        private final int offsetX, offsetY, screenW, screenH;
+
+        CornerMask(android.content.Context c, float radius, int offsetX, int offsetY, int screenW, int screenH) {
+            super(c);
+            this.radius = radius;
+            this.offsetX = offsetX;
+            this.offsetY = offsetY;
+            this.screenW = screenW;
+            this.screenH = screenH;
+            clear.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.CLEAR));
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            int layer = canvas.saveLayer(0, 0, getWidth(), getHeight(), null);
+            canvas.save();
+            canvas.translate(-offsetX, -offsetY);
+            background.setBounds(0, 0, screenW, screenH);
+            background.draw(canvas);
+            canvas.restore();
+            hole.set(0, 0, getWidth(), getHeight());
+            canvas.drawRoundRect(hole, radius, radius, clear); // anti-aliased, so the curve stays smooth
+            canvas.restoreToCount(layer);
+        }
     }
 
     /** Frosted panel: translucent fill, top sheen, and a bright-to-faint edge. */

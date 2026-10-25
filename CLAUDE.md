@@ -36,7 +36,10 @@ A debloat kit and a custom Android TV launcher (`dev.tvhome.launcher`) for a Son
   be verified with a real remote. Activity-side behaviour can be tested with
   `am start -n dev.tvhome.launcher/.HomeActivity --ez/--ei/--es <extra>` (see HomeActivity EXTRA_*).
 - `uiautomator dump` fails while the live HDMI tile is on screen ("could not get idle state") and
-  screenshots are blocked while video plays; use `dumpsys activity top` / `dumpsys SurfaceFlinger`.
+  `screencap` returns an empty file while the HDMI layer is up; use `dumpsys activity top` /
+  `dumpsys SurfaceFlinger`, or the launcher's own `SNAPSHOT` extra for an image (see README).
+- `root` must keep clipping its children: the TvView (SurfaceView) clears its area to punch the video
+  hole, and an unclipped parent lets that clear wipe the whole aurora background.
 - PowerShell 5.1 strips double quotes from native arguments: for non-trivial `adb shell` commands,
   pipe a script to `/data/local/tmp/x.sh` and run it (and delete it afterwards).
 - After changing `key_service.xml` capabilities, re-enable the service

@@ -3,6 +3,9 @@
 A faster, ad-free Sony BRAVIA Android TV with a custom home screen, built entirely over network ADB
 from a Windows PC. Nothing is rooted, nothing is uninstalled, and every change can be undone.
 
+![TV Home on a Sony KD-55X8000H: clock, live HDMI tile, Now playing panel and app dock](docs/home.png)
+<sub>The home screen as the launcher renders it. On the TV the left tile shows the laptop's HDMI input live.</sub>
+
 - **Debloat** — switches off ads, tracking, telemetry, demo and hotel-mode services (`pm disable-user`,
   reversible). App logins and data are never touched.
 - **Custom launcher** — liquid-glass home screen: a centered iOS-style 12-hour clock, a **live HDMI
@@ -92,9 +95,16 @@ Desktops can also be set over adb:
 1. Set the PC's sound output to your headphones (not the TV, or audio loops).
 2. Pair from the **PC**: Settings → Bluetooth & devices → Add device, while the TV is on
    Settings → Remotes & Accessories. (Pairing started only from the TV leaves Windows without a record.)
-3. `.\tv-audio-receiver.ps1 -List`, then `.\tv-audio-receiver.ps1 -Name SONY` and leave it running.
+3. `.\tv-audio-receiver.ps1 -List` to check the TV shows up, then either run it once
+   (`.\tv-audio-receiver.ps1 -Name SONY`) or install it to start hidden at every sign-in:
+   `.\tv-audio-receiver.ps1 -InstallTask` (current user, no admin; `-RemoveTask` undoes it).
+   It keeps a receiving connection ready, retries while the TV is off, and logs changes to
+   `%LOCALAPPDATA%\TRG-TV\tv-audio-receiver.log`.
+4. If the laptop can't open the link itself (log says `Waiting for the TV (UnknownFailure)`), connect from
+   the TV once: Settings → Remotes & Accessories → your PC → Connect.
 
-Uses Windows' built-in `AudioPlaybackConnection` (A2DP sink) — nothing to install. ~0.2 s Bluetooth latency.
+While connected the TV's own speakers are silent. Uses Windows' built-in `AudioPlaybackConnection`
+(A2DP sink) — nothing to install. ~0.2 s Bluetooth latency.
 
 ## What this Sony firmware does and doesn't allow
 
@@ -136,7 +146,13 @@ launcher/                   the home screen app (dev.tvhome.launcher)
   src/.../Glass, Ui         liquid-glass drawables, focus effect, helpers
   src/.../Config            dock apps, HDMI input, music app
 hdmi-test/                  minimal app that checks TvView HDMI preview works on a TV
+docs/home.png               README screenshot
 ```
+
+To refresh the screenshot: `adb shell am start -n dev.tvhome.launcher/.HomeActivity --ez dev.tvhome.launcher.SNAPSHOT true`,
+then `adb pull /sdcard/Android/data/dev.tvhome.launcher/files/home.png docs/home.png`. The launcher draws itself
+(this TV's `screencap` is empty while the HDMI layer is on screen) and shows Now playing idle, so no
+listening history ends up in the image.
 
 ## Security & privacy
 

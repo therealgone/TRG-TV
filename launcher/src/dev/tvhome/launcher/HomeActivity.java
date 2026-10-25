@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -32,6 +34,9 @@ import android.widget.ScrollView;
 import android.widget.TextClock;
 import android.widget.TextView;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +58,12 @@ public class HomeActivity extends Activity {
     static final String EXTRA_CLOSE_DESKTOP = "dev.tvhome.launcher.CLOSE_DESKTOP";
     static final String EXTRA_SET_DESKTOP = "dev.tvhome.launcher.SET_DESKTOP";
     static final String EXTRA_SET_OWNER_NAME = "dev.tvhome.launcher.SET_OWNER_NAME";
+    /**
+     * Save the home screen as a PNG in the app's external files dir (for the README). This TV's screencap
+     * is empty while the HDMI layer is on screen and drops the background, so the launcher draws itself.
+     * Now playing shows its idle state in the image, so no personal listening ends up in the screenshot.
+     */
+    static final String EXTRA_SNAPSHOT = "dev.tvhome.launcher.SNAPSHOT";
 
     /** True while HDMI is full screen and this activity is in front; read by {@link KeyService}. */
     static volatile boolean hdmiFullScreen;
@@ -96,7 +107,8 @@ public class HomeActivity extends Activity {
 
         root = new FrameLayout(this);
         root.setBackground(new Glass.Aurora(0));
-        root.setClipChildren(false);
+        // root must clip its children: the TvView clears its area to punch a hole for the video, and
+        // unclipped that clear wipes the whole background. Popping tiles only need `content` unclipped.
 
         // The live picture sits under all UI; the UI layer draws the tile frame and labels over it.
         tvView = new TvView(this);
@@ -157,7 +169,10 @@ public class HomeActivity extends Activity {
         date.setTextColor(0xE6FFFFFF);
         date.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         date.setIncludeFontPadding(false);
-        clock.addView(date);
+        date.setSingleLine(true);
+        date.setGravity(Gravity.CENTER_HORIZONTAL);
+        // Full width: a wrap-content TextClock keeps its first measured width and clips longer dates.
+        clock.addView(date, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         TextClock time = new TextClock(this);
         time.setFormat12Hour("h:mm"); // always 12-hour, like iOS, whatever the TV's setting
@@ -171,7 +186,7 @@ public class HomeActivity extends Activity {
         tp.topMargin = dp(2);
         clock.addView(time, tp);
 
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, height, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(dp(560), height, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
         lp.topMargin = dp(16);
         content.addView(clock, lp);
     }
@@ -608,6 +623,20 @@ public class HomeActivity extends Activity {
     /** Hold-0 (HDMI), desktop picker, or Home: Home always lands on the plain home layout. */
     private void handleIntent(Intent intent) {
         if (intent == null) return;
+        if (intent.getBooleanExtra(EXTRA_SNAPSHOT, false)) {
+            collapse(false);
+            hideAllApps();
+            // After onResume (which restarts Now playing): switch the panel to idle so no track or album
+            // art is in the image, let it lay out, draw, then bring Now playing back.
+            root.postDelayed(() -> {
+                nowPlaying.stop();
+                root.postDelayed(() -> {
+                    saveSnapshot();
+                    if (resumed) nowPlaying.start();
+                }, 400);
+            }, 800);
+            return;
+        }
         if (intent.getBooleanExtra(EXTRA_HDMI, false)) {
             hideAllApps();
             expandNow();
@@ -669,6 +698,34 @@ public class HomeActivity extends Activity {
     }
 
     // ---------- helpers ----------
+
+    /** Draws the current screen into files/home.png (adb: /sdcard/Android/data/<pkg>/files/home.png). */
+    private void saveSnapshot() {
+        // The live HDMI picture isn't part of the view tree (the TvView only cuts a hole), so the tile is
+        // shown as a black screen with a caption.
+        int statusWas = tileStatus.getVisibility();
+        CharSequence statusText = tileStatus.getText();
+        showTileStatus("Live " + Config.PREVIEW_INPUT_LABEL + " preview");
+        Bitmap ui = Bitmap.createBitmap(root.getWidth(), root.getHeight(), Bitmap.Config.ARGB_8888);
+        root.draw(new Canvas(ui));
+        tileStatus.setText(statusText);
+        tileStatus.setVisibility(statusWas);
+
+        Bitmap out = Bitmap.createBitmap(ui.getWidth(), ui.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(out);
+        canvas.drawColor(0xFF000000);
+        canvas.drawBitmap(ui, 0, 0, null);
+        ui.recycle();
+        File file = new File(getExternalFilesDir(null), "home.png");
+        try (FileOutputStream os = new FileOutputStream(file)) {
+            out.compress(Bitmap.CompressFormat.PNG, 100, os);
+            Log.i(TAG, "snapshot saved: " + file);
+        } catch (IOException e) {
+            Log.w(TAG, "snapshot failed", e);
+        } finally {
+            out.recycle();
+        }
+    }
 
     private void launch(String pkg) {
         Intent i = launchIntent(this, pkg);

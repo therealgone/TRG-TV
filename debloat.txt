@@ -1,0 +1,40 @@
+# Sony KD-55X8000H (BRAVIA 4K UR3, Android 10) - background services to disable.
+# Method: pm disable-user --user 0  (reversible; no app is uninstalled, no app data is cleared)
+# Lines starting with # are skipped. Uncomment a TIER 2 line only after deciding you don't use that feature.
+# User apps (Netflix, Prime, YouTube, Crunchyroll, Spotify, players, Apple TV...) are NOT on this list.
+
+# ---------- TIER 1: ads, tracking, telemetry, demo, help (no feature you use is lost) ----------
+tv.samba.ssm                                # Samba TV: fingerprints what's on screen for ad targeting
+com.sony.dtv.promos                         # My BRAVIA promos
+com.sony.dtv.sonyselect                     # Sony Select promo tile / app suggestions
+com.sony.dtv.bivlinfo                       # Sony content feed (promo rows)
+com.google.android.tvrecommendations        # sponsored recommendation rows on the home screen
+android.autoinstalls.config.sony.bravia     # silently auto-installs partner apps
+com.sony.dtv.demosupport                    # shop demo mode
+com.sony.dtv.multiscreendemo                # shop demo
+com.sony.dtv.da.service                     # Sony device agent / remote support
+com.qterics.da.product                      # Qterics device agent
+com.sonyericsson.idd.agent                  # Sony usage-data (IDD) logging
+com.sony.dtv.sonybugreportsys               # bug report uploader
+com.google.android.tv.bugreportsender       # bug report uploader
+com.google.android.feedback                 # Google feedback
+com.sony.dtv.customersupport                # Help tile
+com.sony.dtv.smarthelp                      # Help app
+com.sony.dtv.helpguidecontents              # Built-in manual
+
+# ---------- TIER 2: features most people don't need (uncomment/comment to suit your TV) ----------
+com.sony.dtv.b2b.hotelmode                  # hotel-TV mode (pro installs only)
+com.sony.dtv.b2b.rs232csupport              # RS-232C serial control (pro installs only)
+com.sony.dtv.seeds.iot                      # Sony smart-home / Google Home / Alexa TV control; not used
+
+# Left enabled by default - common features; disable only if you never use them:
+# com.vewd.core.service                     # web engine (~60 MB). Re-enabled 2026-10-25: Sony AirPlay crash-loops without it
+# com.sony.huey.dlna.module                 # DLNA: play media from PC/phone over home network
+# com.sony.huey.dlna.renderersettings       # DLNA
+# com.sonyericsson.dlna                     # DLNA
+# com.sony.dtv.networkapp.wifidirect        # Wi-Fi Direct (screen mirroring)
+# com.sony.dtv.homekit                      # Apple HomeKit
+# com.sony.dtv.airplayapp                   # AirPlay from iPhone/Mac
+# com.google.android.tv.remote.service      # control TV from phone (Google TV app remote)
+# com.google.android.katniss                # Google Assistant / mic voice search (~60 MB)
+# com.uei.quicksetsdk.sony                  # controls set-top box / soundbar from the TV remote (~20 MB)

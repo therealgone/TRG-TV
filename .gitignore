@@ -1,0 +1,25 @@
+# Build output
+build/
+*.apk
+*.idsig
+*.dex
+*.class
+
+# Signing keys
+*.keystore
+*.jks
+
+# Personal, local-only settings: your TV's address and the greeting name
+.tvhost
+.owner-name
+
+# Snapshots of a specific TV (installed apps, memory dumps)
+baseline/
+
+# Editors and OS
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+desktop.ini

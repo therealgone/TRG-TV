@@ -1,4 +1,4 @@
-# TV Home â€” debloat + liquid-glass launcher for a Sony BRAVIA Android TV
+# TV Home ” debloat + liquid-glass launcher for a Sony BRAVIA Android TV
 
 A faster, ad-free Sony BRAVIA Android TV with a custom home screen, built entirely over network ADB
 from a Windows PC. Nothing is rooted, nothing is uninstalled, and every change can be undone.
